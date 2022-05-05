@@ -12,7 +12,6 @@ USER root
 
 WORKDIR "/opt/cresi"
 
-
 # use conda-forge instead of default channel
 RUN conda update conda && \
     conda config --add channels conda-forge
@@ -36,7 +35,6 @@ RUN pip install torch==1.8.2+cpu torchvision==0.9.2+cpu \
 ENV TINI_VERSION v0.16.1
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /usr/bin/tini
 RUN chmod +x /usr/bin/tini
-
 
 RUN apt-get update && apt-get install libgl1 -y
 

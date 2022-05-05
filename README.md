@@ -8,27 +8,27 @@ This repository is forked from `https://github.com/CosmiQ/cresi`
 ____
 ## Install
 
-1. Download this repository
+1. Download/clone this repository `git clone git@github:amanbagrecha/cresi-modified`
 
 2. pull docker image
 
-		docker pull /path_to_cresi/docker/image
+		docker pull amanbagrecha/cresi:v1
 	
 3. Create docker container (all commands should be run in this container)
 
-		docker run -it --rm -v /local/dir:/opt/cresi -p 9111:9111 --ipc=host --name cresi_cpu aman/cresi:v1
+		docker run -it --rm -v /local/dir:/opt/cresi -p 9111:9111 --ipc=host --name cresi_cpu amanbagrecha/cresi:v1
 ____
 
 ## Test
 
-An example test image can be found from the Spacenet 5 challenge.
+An example test image can be found from the (Spacenet 5 challenge)[https://registry.opendata.aws/spacenet/].
 
 
 Here we downsample the default GSD of the test image from 0.3 cm to 0.6 cm. More info about this below.
 
 Inference can be perform either using shell script or using jupyter notebook.
 
-1. Via Jupyter notebook
+#### 1. Via Jupyter notebook
 
 Launch jupyter notebook by typing in the following command
 
@@ -43,8 +43,9 @@ It would ask for token, you can copy from your terminal and paste it in browser.
 
 Run the cell sequentially as described in [cresi_cpu_part2.ipynb](https://github.com/amanbagrecha/cresi-modified/blob/main/notebooks/dar_tutorial_cpu/cresi_cpu_part2.ipynb)
 
+---
 
-2. Via shell script
+#### 2. Via shell script
 
 ```sh
 # Download test data
@@ -58,7 +59,7 @@ cd $src_dir
 ./test.sh configs/dar_tutorial_cpu.json
 ```	
 
-2. Run commands individually
+#### 3. Run commands individually
 
 
 	A. Execute inference (within docker image)
