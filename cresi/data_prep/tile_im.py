@@ -29,7 +29,7 @@ def slice_ims(im_dir, out_dir, slice_x, slice_y,
                     pos_columns = ['idx', 'name', 'name_full', 'xmin', 
                                    'ymin', 'slice_x', 
                                    'slice_y', 'im_x', 'im_y'],
-                    sep='__', verbose=True):
+                    sep='__', verbose=False):
     '''Slice images into patches, assume ground truth masks 
         are present
     Adapted from basiss.py'''
@@ -195,7 +195,7 @@ def main():
                        pos_columns = ['idx', 'name', 'name_full', 'xmin', 
                                    'ymin', 'slice_x', 
                                    'slice_y', 'im_x', 'im_y'],
-                       verbose=True)
+                       verbose=False)
         # save to file
         df_pos.to_csv(path_tile_df_csv)
         print("df saved to file:", path_tile_df_csv)

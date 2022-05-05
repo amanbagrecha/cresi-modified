@@ -10,16 +10,28 @@ FROM continuumio/conda-ci-linux-64-python3.8:latest
 
 USER root
 
+WORKDIR "/opt/cresi"
+
+
 # use conda-forge instead of default channel
 RUN conda update conda && \
     conda config --add channels conda-forge
 
-# install mamba for faster resolution
+# # install mamba for faster resolution
 RUN conda install -y -c conda-forge mamba && \
     conda update mamba
 
+ADD https://raw.githubusercontent.com/amanbagrecha/cresi-modified/main/requirements.yml ./
 
-RUN mamba install -y --file requirements.yml  
+RUN mamba env update -f requirements.yml
+
+RUN pip install torch==1.8.2+cpu torchvision==0.9.2+cpu \
+-f https://download.pytorch.org/whl/lts/1.8/torch_lts.html \ 
+&& pip install tensorboardX \
+&& pip install utm \
+&& pip install numba \
+&& pip install torchsummary \
+&& pip install imagecodecs
 
 ENV TINI_VERSION v0.16.1
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /usr/bin/tini
@@ -28,13 +40,11 @@ RUN chmod +x /usr/bin/tini
 
 RUN apt-get update && apt-get install libgl1 -y
 
-# # TensorBoard
+# # # TensorBoard
 EXPOSE 6006
-# # IPython
+# # # IPython
 EXPOSE 9111
 
 ENV PROJ_LIB /opt/conda/share/proj
-
-WORKDIR "/opt/cresi"
 
 RUN ["/bin/bash"]

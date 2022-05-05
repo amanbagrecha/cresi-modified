@@ -45,7 +45,7 @@ linestring = "LINESTRING {}"
 # from apls.py
 ###############################################################################
 def clean_sub_graphs(G_, min_length=150, max_nodes_to_skip=100,
-                     weight='length_pix', verbose=True,
+                     weight='length_pix', verbose=False,
                      super_verbose=False):
     '''Remove subgraphs with a max path length less than min_length,
     if the subgraph has more than max_noxes_to_skip, don't check length 
@@ -808,33 +808,7 @@ def img_to_ske_G(params):
         # print an edge
         edge_tmp = list(G.edges())[-1]
         print("random edge props for edge:", edge_tmp, " = ",
-              G.edges[edge_tmp[0], edge_tmp[1], 0]) #G.edge[edge_tmp[0]][edge_tmp[1]])
-        # node_tmp = list(G.nodes())[np.random.randint(len(G.nodes()))]
-        # print(node_tmp, "G.node props:", G.nodes[node_tmp])
-        # edge_tmp = list(G.edges())[np.random.randint(len(G.edges()))]
-        # print(edge_tmp, "G.edge props:", G.edges(edge_tmp))
-        # print(edge_tmp, "G.edge props:", G.edges[edge_tmp[0]][edge_tmp[1]])
-
-    # # let's not clean out subgraphs yet, since we still need to run
-    # # add_small_segments() and terminal_points_to_crossroads()
-    # if verbose:
-    #     print("Clean out short subgraphs")
-    #     try:
-    #         sub_graphs = list(nx.connected_component_subgraphs(G))
-    #     except:
-    #         sub_graphs = list(nx.conncted_components(G))
-    #     # print("sub_graphs:", sub_graphs)
-    # # sknw attaches a 'weight' property that is the length in pixels
-    # t01 = time.time()
-    # G = clean_sub_graphs(G, min_length=min_subgraph_length_pix,
-    #                  max_nodes_to_skip=100,
-    #                  weight='weight', verbose=verbose,
-    #                  super_verbose=False)
-    # t02 = time.time()
-    # if verbose:
-    #     print("Time to run clean_sub_graphs():", t02-t01, "seconds")
-    #     print("len G_sub.nodes():", len(G.nodes()))
-    #     print("len G_sub.edges():", len(G.edges()))
+              G.edges[edge_tmp[0], edge_tmp[1], 0])
 
     # remove self loops
     ebunch = nx.selfloop_edges(G)

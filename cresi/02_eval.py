@@ -95,7 +95,7 @@ def eval_cresi(config, paths, fn_mapping, image_suffix, save_dir, test=True,
            if args.fold is not None and int(args.fold) != fold:
                print("ummmm....")
                continue
-           keval.predict(fold, e, weight_dir, verbose=True)
+           keval.predict(fold, e, weight_dir, verbose=False)
            
     return folds
 

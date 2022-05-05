@@ -306,7 +306,7 @@ def plot_graph_on_im_yuge(G_, im_test_file, figsize=(12,12), show_endnodes=False
                      max_speeds_per_line=12,  
                      line_alpha=0.5, node_alpha=0.6,
                      default_dpi=300, plt_save_quality=75, 
-                     ax=None, verbose=True, super_verbose=False):
+                     ax=None, verbose=False, super_verbose=False):
     '''
     COPIED VERBATIM FROM APLS_TOOLS.PY
     Overlay graph on image,

@@ -31,7 +31,7 @@ class FullImageEvaluator(Evaluator):
             self.on_image_constructed(names[i], predicted[i,...], prefix)
 
     def save(self, name, prediction, prefix="", #save_im_gdal_format=True,
-             verbose=True):
+             verbose=False):
         # AVE edit
         save_im_gdal_format = self.save_im_gdal_format
         if verbose:
