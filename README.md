@@ -21,7 +21,7 @@ ____
 
 ## Test
 
-An example test image can be found from the (Spacenet 5 challenge)[https://registry.opendata.aws/spacenet/].
+An example test image can be found from the [Spacenet 5 challenge](https://registry.opendata.aws/spacenet/).
 
 
 Here we downsample the default GSD of the test image from 0.3 cm to 0.6 cm. More info about this below.
@@ -48,8 +48,20 @@ Run the cell sequentially as described in [cresi_cpu_part2.ipynb](https://github
 #### 2. Via shell script
 
 ```sh
+
+# setup path
+cresi_dir=/opt/cresi
+src_dir=$cresi_dir/cresi
+weight_dir=$cresi_dir/results/aws_weights
+test_im_raw_dir=$cresi_dir/test_imagery/dar/PS-MS
+# make dir if not exist
+mkdir -p $cresi_dir $src_dir $weight_dir $test_im_raw_dir
+
+# Download model weights
+aws s3 cp --no-sign-request s3://spacenet-dataset/spacenet-model-weights/spacenet-5/baseline/ $weight_dir
+
 # Download test data
-aws s3 cp --recursive s3://spacenet-dataset/AOIs/AOI_10_Dar_Es_Salaam/PS-MS $weight_dir
+aws s3 cp --no-sign-request s3://spacenet-dataset/AOIs/AOI_10_Dar_Es_Salaam/PS-MS $test_im_raw_dir
 
 # clip and downsample test data
 python $src_dir/01b_prep.py

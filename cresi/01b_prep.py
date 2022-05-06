@@ -31,7 +31,7 @@ test_im_clip = os.path.join(test_im_clip_dir, im_name.split('.tif')[0] + '_clip_
 # clip to extent
 args = f'gdal_translate -projwin {ulx} {uly} {lrx} {lry} {test_im_raw} {test_im_tmp}'
 if os.path.exists(test_im_tmp):
-    print(f"File {test_im_tmp} exists, skipping")
+    print(f"File exists, skipping!{test_im_tmp}")
 else:
     subprocess.call(args, shell=True)
     print("temp file:", test_im_tmp)
@@ -39,7 +39,7 @@ else:
 # resample 30 cm imagery to 60 cm
 args2 = f'gdal_translate -outsize 50% 50% {test_im_tmp} {test_im_clip}'
 if os.path.exists(test_im_clip):
-    print(f"File {test_im_clip} exists, skipping")
+    print(f"File exists, skipping! {test_im_clip}")
 else:
     subprocess.call(args2, shell=True)
     print("output_file:", test_im_clip)
