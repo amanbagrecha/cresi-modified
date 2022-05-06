@@ -61,7 +61,7 @@ mkdir -p $cresi_dir $src_dir $weight_dir $test_im_raw_dir
 aws s3 cp --no-sign-request s3://spacenet-dataset/spacenet-model-weights/spacenet-5/baseline/ $weight_dir
 
 # Download test data
-aws s3 cp --no-sign-request s3://spacenet-dataset/AOIs/AOI_10_Dar_Es_Salaam/PS-MS $test_im_raw_dir
+aws s3 cp --no-sign-request s3://spacenet-dataset/AOIs/AOI_10_Dar_Es_Salaam/PS-MS/ $test_im_raw_dir
 
 # clip and downsample test data
 python $src_dir/01b_prep.py
