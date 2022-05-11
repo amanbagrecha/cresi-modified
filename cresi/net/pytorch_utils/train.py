@@ -191,8 +191,8 @@ class Estimator:
 
         meter = defaultdict(float)
         for input, target in zip(inputs, targets):
-            input = torch.autograd.Variable(input.cuda(async=True), volatile=not training)
-            target = torch.autograd.Variable(target.cuda(async=True), volatile=not training)
+            input = torch.autograd.Variable(input.cuda(non_blocking=True), volatile=not training)
+            target = torch.autograd.Variable(target.cuda(non_blocking=True), volatile=not training)
             if verbose:
                 print("input.shape, target.shape:", input.shape, target.shape)
             output = self.model(input)
