@@ -96,7 +96,7 @@ cd $src_dir
 
 # Install and Train (using GPU)
 
-1. Download/clone this repository `git clone git@github:amanbagrecha/cresi-modified`
+1. Download/clone this repository `git clone https://github.com/amanbagrecha/cresi-modified.git`
 
 2. pull docker image
 
@@ -143,10 +143,10 @@ python $src_dir/data_prep/speed_masks.py \
   --buffer_distance_meters=2
 
 # generate folds
-python $src_dir/00_gen_folds.py $src_dir/config/sn5_baseline.json
+python $src_dir/00_gen_folds.py $src_dir/configs/sn5_baseline.json
 
 # start training
-python $src_dir/01_train.py $src_dir/config/sn5_baseline.json --fold=0
+python $src_dir/01_train.py $src_dir/configs/sn5_baseline.json --fold=0
 
 
 # Perform inference
@@ -159,5 +159,5 @@ python $src_dir/data_prep/create_8bit_images.py \
     --band_order=5,3,2
 
 # run eval
-python $src_dir/02_eval.py $src_dir/config/sn5_baseline.json
+python $src_dir/02_eval.py $src_dir/configs/sn5_baseline.json
 ```
