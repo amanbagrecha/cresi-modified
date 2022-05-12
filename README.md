@@ -6,7 +6,9 @@ This repository is forked from `https://github.com/CosmiQ/cresi`
 
 
 ____
-## Install
+
+## Install & Test
+
 
 1. Download/clone this repository `git clone git@github:amanbagrecha/cresi-modified`
 
@@ -18,9 +20,6 @@ ____
 
 		docker run -it --rm -v /local/dir:/opt/cresi -p 9111:9111 --ipc=host --name cresi_cpu amanbagrecha/cresi:v1
 ____
-
-## Test
-
 An example test image can be found from the [Spacenet 5 challenge](https://registry.opendata.aws/spacenet/).
 
 
@@ -95,3 +94,67 @@ cd $src_dir
 		python $src_dir/05_wkt_to_G.py configs/dar_tutorial_cpu.json
 
 
+# Install and Train (using GPU)
+
+1. Download/clone this repository `git clone git@github:amanbagrecha/cresi-modified`
+
+2. pull docker image
+
+		docker pull amanbagrecha/cresi-gpu:v1
+	
+3. Create docker container (all commands should be run in this container) do not forget to change the `/local/dir`
+
+		docker run -it --rm --gpus 1 -v /local/dir:/opt/cresi -p 9111:9111 --ipc=host --name cresi_gpu amanbagrecha/cresi-gpu:v1
+
+Your `local/dir` should be the root of your git clone
+
+```sh
+# setup path
+cresi_dir=/opt/cresi
+src_dir=$cresi_dir/cresi
+data_dir=$cresi_dir/data
+
+# make dir if not exist
+mkdir -p $cresi_dir $src_dir $data
+
+# Download SN5 Roads for mumbai for training the model
+aws s3 sync --no-sign-request s3://spacenet-dataset/spacenet/SN5_roads/train/AOI_8_Mumbai/PS-MS \
+$data_dir/SN5_roads/AOI_8_Mumbai/PS-MS
+
+# Download mumbai road geojson data
+aws s3 sync --no-sign-request s3://spacenet-dataset/spacenet/SN5_roads/train/AOI_8_Mumbai/geojson_roads_speed \
+$data_dir/SN5_roads/AOI_8_Mumbai/geojson_roads_speed
+
+# downsample the data and convert to 8bit
+python $src_dir/data_prep/create_8bit_images.py \
+    --indir=$data_dir/SN5_roads/AOI_8_Mumbai/PS-MS \
+    --outdir=$data_dir/cresi_data/train/8bit/PS-RGB \
+    --rescale_type=perc \
+    --percentiles=2,98 \
+    --band_order=5,3,2
+
+# create multichannel training masks
+python $src_dir/data_prep/speed_masks.py \
+  --geojson_dir=$data_dir/SN5_roads/AOI_8_Mumbai/geojson_roads_speed \
+  --image_dir=$data_dir/SN5_roads/AOI_8_Mumbai/PS-MS \
+  --output_conversion_csv_binned=$data_dir/cresi_data/train/SN5_roads_train_speed_conversion_binned.csv \
+  --output_mask_dir=$data_dir/cresi_data/train/train_mask_binned \
+  --output_mask_multidim_dir=$data_dir/cresi_data/train/train_mask_binned_mc \
+  --buffer_distance_meters=2
+
+# generate folds
+python $src_dir/00_gen_folds.py $src_dir/config/sn5_baseline.json
+
+# start training
+python $src_dir/01_train.py config/sn5_baseline.json --fold=0
+
+
+# Perform inference
+python $src_dir/data_prep/create_8bit_images.py \
+    --indir=$data_dir/SN5_roads/AOI_8_Mumbai/PS-MS \
+    --outdir=$data_dir/cresi_data/train/8bit/public_test/PS-RGB \
+    --rescale_type=perc \
+    --percentiles=2,98 \
+    --band_order=5,3,2
+
+```
