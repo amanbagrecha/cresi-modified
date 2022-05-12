@@ -7,10 +7,10 @@ This repository is forked from `https://github.com/CosmiQ/cresi`
 
 ____
 
-## Install & Test
+## Install & Test (currently under review, visit next section to train the model)
 
 
-1. Download/clone this repository `git clone git@github:amanbagrecha/cresi-modified`
+1. Download/clone this repository `git clone https://github.com/amanbagrecha/cresi-modified.git`
 
 2. pull docker image
 
@@ -113,9 +113,6 @@ Your `local/dir` should be the root of your git clone
 cresi_dir=/opt/cresi
 src_dir=$cresi_dir/cresi
 data_dir=$cresi_dir/data
-
-# make dir if not exist
-mkdir -p $cresi_dir $src_dir $data
 
 # Download SN5 Roads for mumbai for training the model
 aws s3 sync --no-sign-request s3://spacenet-dataset/spacenet/SN5_roads/train/AOI_8_Mumbai/PS-MS \
