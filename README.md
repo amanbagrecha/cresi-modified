@@ -7,7 +7,7 @@ This repository is forked from `https://github.com/CosmiQ/cresi`
 
 ____
 
-## Install & Test (currently under review, visit next section to train the model)
+## Install & Test (inference)
 
 
 1. Download/clone this repository `git clone https://github.com/amanbagrecha/cresi-modified.git`
