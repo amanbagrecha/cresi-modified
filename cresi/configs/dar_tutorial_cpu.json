@@ -2,7 +2,7 @@
     "path_src": "/opt/cresi/cresi",
     "path_results_root": "/opt/cresi/results",
     "speed_conversion_file": "/opt/cresi/cresi/configs/speed_conversion_binned7.csv",
-    "save_weights_dir": "/opt/cresi/results/aws_weights/weights",
+    "save_weights_dir": "/opt/cresi/cresi/configs/weights",
     "test_data_refined_dir": "/opt/cresi/data/final_clips",
     "test_sliced_dir": "/opt/cresi/data/final_clips_sliced",
     "test_results_dir": "dar_tutorial_cpu",

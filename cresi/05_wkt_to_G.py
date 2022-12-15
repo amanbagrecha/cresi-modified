@@ -305,10 +305,7 @@ def wkt_to_shp(wkt_list, shp_file):
         for i, line in enumerate(wkt_list):
             shape = shapely.wkt.loads(line)
             c.write(
-                {
-                    "geometry": mapping(shape),
-                    "properties": {"id": i},
-                }
+                {"geometry": mapping(shape), "properties": {"id": i},}
             )
     return
 
@@ -1126,13 +1123,12 @@ def wkt_to_G(params):
         )
 
     # Get rid of non-intersection nodes
-    print("degrees", Gout.degree)
-    to_remove = [n for n, x in Gout.degree if x <= 2]
-    Gout.remove_nodes_from(to_remove)
+    # to_remove = [n for n, x in Gout.degree if x <= 2]
+    # Gout.remove_nodes_from(to_remove)
 
     # get rid of roads
-    edges = list(Gout.edges())
-    Gout.remove_edges_from(edges)
+    # edges = list(Gout.edges())
+    # Gout.remove_edges_from(edges)
 
     # get a few stats (and set to graph properties)
     if verbose:
