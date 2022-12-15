@@ -11,7 +11,6 @@ from .eval import Evaluator
 
 # import relative paths
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from utils.save_array_gdal import CreateMultiBandGeoTiff
 
 # skimage gives really annoying warnings
 warnings.filterwarnings("ignore")
@@ -30,13 +29,13 @@ class FullImageEvaluator(Evaluator):
         for i in range(len(names)):
             self.on_image_constructed(names[i], predicted[i,...], prefix)
 
-    def save(self, name, prediction, prefix="", #save_im_gdal_format=True,
+    def save(self, name, prediction, prefix="",
              verbose=False):
         # AVE edit
-        save_im_gdal_format = self.save_im_gdal_format
         if verbose:
             print ("concrete_eval.py: prediction.shape:", prediction.shape)
             print ("np.unique prediction:", np.unique(prediction))
+
         if len(prediction.shape) == 2:
             cv2.imwrite(os.path.join(self.save_dir, prefix + name), (prediction * 255).astype(np.uint8))
         else:
@@ -61,15 +60,7 @@ class FullImageEvaluator(Evaluator):
                 print ("prediction.shape:", prediction.shape)
                 print ("outfile_sk:", outfile_sk)
 
-            skimage.io.imsave(outfile_sk, (mask * 255).astype(np.uint8), compress=1)
-            
-            # also save with gdal?
-            if save_im_gdal_format:
-                save_dir_gdal = os.path.join(self.save_dir + '_gdal')
-                #print ("save_dir_gdal:", save_dir_gdal)
-                os.makedirs(save_dir_gdal, exist_ok=True)
-                CreateMultiBandGeoTiff(os.path.join(save_dir_gdal, prefix + name), (mask * 255).astype(np.uint8))
-              
+            skimage.io.imsave(outfile_sk, (mask * 255).astype(np.uint8), compress=1)             
 
 class CropEvaluator(Evaluator):
     def __init__(self, *args, **kwargs):
@@ -115,10 +106,8 @@ class CropEvaluator(Evaluator):
         self.current_mask = np.zeros((geometry['rows'], geometry['cols']), np.uint8)
         self.current_prediction = np.zeros((geometry['rows'], geometry['cols']), np.float32)
 
-    def save(self, name, prediction, prefix="", #save_im_gdal_format=True,
-             verbose=False):
-        # AVE edit
-        save_im_gdal_format = self.save_im_gdal_format
+    def save(self, name, prediction, prefix="", verbose=False):
+
         if verbose:
             print ("concrete_eval.py: prediction.shape:", prediction.shape)
             print ("np.unique prediction:", np.unique(prediction))
@@ -147,11 +136,3 @@ class CropEvaluator(Evaluator):
                 print ("outfile_sk:", outfile_sk)
             skimage.io.imsave(outfile_sk, (mask * 255).astype(np.uint8), 
                               compress=1)
-            
-            # also save with gdal?
-            if save_im_gdal_format:
-                save_dir_gdal = os.path.join(self.save_dir + '_gdal')
-                #print ("save_dir_gdal:", save_dir_gdal)
-                os.makedirs(save_dir_gdal, exist_ok=True)
-                CreateMultiBandGeoTiff(os.path.join(save_dir_gdal, prefix + name), (mask * 255).astype(np.uint8))
-              

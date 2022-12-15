@@ -37,8 +37,8 @@ def get_csv_folds(path, d, use_all=False):
     return list(zip(np.array(train), np.array(test)))
 
 def update_config(config, **kwargs):
-    print ("Run utils.update_config()...")
+    #print ("Run utils.update_config()...")
     d = config._asdict()
     d.update(**kwargs)
-    print("Updated config:", d)
+    #print("Updated config:", d)
     return Config(**d)

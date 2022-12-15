@@ -5,7 +5,7 @@
     "save_weights_dir": "/opt/cresi/cresi/configs/weights",
     "test_data_refined_dir": "/opt/cresi/data/final_clips",
     "test_sliced_dir": "/opt/cresi/data/final_clips_sliced",
-    "test_results_dir": "dar_tutorial_cpu",
+    "test_results_dir": "/opt/cresi/results",
     "slice_x": 1300,
     "slice_y": 1300,
     "stride_x": 1280,
