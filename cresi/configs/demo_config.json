@@ -3,8 +3,8 @@
     "path_results_root": "/opt/cresi/results",
     "speed_conversion_file": "/opt/cresi/cresi/configs/speed_conversion_binned7.csv",
     "save_weights_dir": "/opt/cresi/cresi/configs/weights",
-    "test_data_refined_dir": "/opt/cresi/data/final_clips",
-    "test_sliced_dir": "/opt/cresi/data/final_clips_sliced",
+    "test_data_refined_dir": "/opt/cresi/data/8bit_clips",
+    "raw_data_dir": "/opt/cresi/data/raw_data",
     "test_results_dir": "/opt/cresi/results",
     "slice_x": 1300,
     "slice_y": 1300,
@@ -62,5 +62,8 @@
     "optimizer": "adam",
     "warmup": 0,
     "ignore_target_size": false,
-    "path_data_root": "/opt/cresi/cresi/data"
+    "path_data_root": "/opt/cresi/data",
+    "results_dir": "/opt/cresi/results",
+    "eight_bit_dir": "/opt/cresi/data/8bit_data",
+    "sliced_dir": "/opt/cresi/data/sliced_data"
 }

@@ -292,6 +292,7 @@ def wkt_to_shp(wkt_list, shp_file):
     # https://gis.stackexchange.com/questions/52705/how-to-write-shapely-geometries-to-shapefiles
     """
 
+    print(wkt_list)
     print("writing shapefile from wkt list")
 
     # Define a linestring feature geometry with one attribute
@@ -366,66 +367,6 @@ def pixelToGeoCoord(params):
         geom.Transform(coord_trans)
 
     return {identifier: (geom.GetX(), geom.GetY())}
-
-
-# ###############################################################################
-# def pixelToGeoCoord_raw(xPix, yPix, inputRaster, sourceSR='', geomTransform='',
-#                     targetSR=''):
-#     '''from spacenet geotools'''
-#     # If you want to guaruntee lon lat output, specify TargetSR  otherwise,
-#     # geocoords will be in image geo reference
-#     # targetSR = osr.SpatialReference()
-#     # targetSR.ImportFromEPSG(4326)
-#     # Transform can be performed at the polygon level instead of pixel level
-
-#     if targetSR =='':
-#         performReprojection=False
-#         targetSR = osr.SpatialReference()
-#         targetSR.ImportFromEPSG(4326)
-#     else:
-#         performReprojection=True
-
-#     if geomTransform=='':
-#         srcRaster = gdal.Open(inputRaster)
-#         geomTransform = srcRaster.GetGeoTransform()
-
-#         source_sr = osr.SpatialReference()
-#         source_sr.ImportFromWkt(srcRaster.GetProjectionRef())
-
-#     geom = ogr.Geometry(ogr.wkbPoint)
-#     xOrigin = geomTransform[0]
-#     yOrigin = geomTransform[3]
-#     pixelWidth = geomTransform[1]
-#     pixelHeight = geomTransform[5]
-
-#     xCoord = (xPix * pixelWidth) + xOrigin
-#     yCoord = (yPix * pixelHeight) + yOrigin
-#     geom.AddPoint(xCoord, yCoord)
-
-#     if performReprojection:
-#         if sourceSR=='':
-#             srcRaster = gdal.Open(inputRaster)
-#             sourceSR = osr.SpatialReference()
-#             sourceSR.ImportFromWkt(srcRaster.GetProjectionRef())
-#         coord_trans = osr.CoordinateTransformation(sourceSR, targetSR)
-#         geom.Transform(coord_trans)
-
-#     return (geom.GetX(), geom.GetY())
-
-
-# ##############################################################################
-# def get_node_pix_params(G, im_file, verbose=False):
-
-#     params = []
-#     nn = len(G.nodes())
-#     for i, (n, attr_dict) in enumerate(G.nodes(data=True)):
-#         if verbose and ((i % 1000) == 0):
-#             print (i, "/", nn, "node:", n)
-#         x_pix, y_pix = attr_dict['x_pix'], attr_dict['y_pix']
-
-#         targetSR = osr.SpatialReference()
-#         targetSR.ImportFromEPSG(4326)
-#         params.append((x_pix, y_pix, im_file, targetSR))
 
 
 ##############################################################################
@@ -917,12 +858,15 @@ def wkt_to_G(params):
         else:
             n_threads_tmp = n_threads_max
         G1 = get_edge_geo_coords(G1, im_file, n_threads=n_threads_tmp, verbose=verbose)
+
         t5 = time.time()
+
         if verbose:
             print("Time to run get_edge_geo_coords():", t5 - t4, "seconds")
 
         if verbose:
             print("pre projection...")
+
         node = list(G1.nodes())[-1]
         if verbose:
             print(node, "random node props:", G1.nodes[node])
@@ -937,6 +881,26 @@ def wkt_to_G(params):
         if verbose:
             print("projecting graph...")
         # G_projected = ox.project_graph(G1)
+
+        # create kml object
+        import simplekml
+
+        kml = simplekml.Kml()
+
+        for i, (n, attr_dict) in enumerate(G1.nodes(data=True)):
+            pt = kml.newpoint(
+                name="Intersection",
+                description="Intersection",
+                coords=[(attr_dict["lon"], attr_dict["lat"])],
+            )
+
+            pt.style.linestyle.color = "ff0000ff"  # red
+            pt.style.linestyle.width = 5
+
+            # attr_dict["geometry_wkt"] = attr_dict["geometry"].wkt
+
+        kml.save("/opt/cresi/results/test.kml")
+
         G_projected = osmnx_funcs.project_graph(G1)
         # get geom wkt (for printing/viewing purposes)
         for i, (u, v, attr_dict) in enumerate(G_projected.edges(data=True)):
@@ -1170,25 +1134,20 @@ def wkt_to_G(params):
     nx.write_gpickle(Gout, out_file, protocol=pickle_protocol)
 
     # # save shapefile as well?
-    # if save_shapefiles:
-    #     logger1.info("Saving shapefile to directory: {}".format(graph_dir))
-    #     try:
-    #         ox.save_graph_shapefile(G, filename=image_id.split('.')[0] , folder=graph_dir, encoding='utf-8')
-    #     except:
-    #         print("Cannot save shapefile...")
-    #     #out_file2 = os.path.join(graph_dir, image_id.split('.')[0] + '.graphml')
-    #     #ox.save_graphml(G, image_id.split('.')[0] + '.graphml', folder=graph_dir)
-    #
-    # # plot, if desired
-    # if make_plots:
-    #     print ("Plotting graph...")
-    #     outfile_plot = os.path.join(graph_dir, image_id)
-    #     print ("outfile_plot:", outfile_plot)
-    # ox.plot_graph(G, fig_height=9, fig_width=9,
-    #                   #save=True, filename=outfile_plot, margin=0.01)
-    #                   )
-    #     #plt.tight_layout()
-    #     plt.savefig(outfile_plot, dpi=400)
+    if True:  # save_shapefiles:
+        logger1.info("Saving shapefile to directory: {}".format(graph_dir))
+        try:
+            for node, data in Gout.nodes(data=True):
+                if "osmid" in data:
+                    data["osmid_original"] = data.pop("osmid")
+
+            ox.save_graph_shapefile(
+                Gout, os.path.join(graph_dir, "test"), encoding="utf-8"
+            )
+
+        except Exception as e:
+            print(e)
+            print("Cannot save shapefile...")
 
     t7 = time.time()
     if verbose:
@@ -1204,10 +1163,7 @@ def main():
 
     # min_subgraph_length_pix = 300
     simplify_graph = True  # True # False
-    verbose = True  # sFalse
-    super_verbose = False
-    make_plots = False  # True
-    save_shapefiles = False  # False
+    verbose = False
     pickle_protocol = 4  # 4 is most recent, python 2.7 can't read 4
     node_iter = 10000  # start int for node naming
     edge_iter = 10000  # start int for edge naming
@@ -1223,8 +1179,8 @@ def main():
 
     # outut files
     res_root_dir = os.path.join(config.path_results_root, config.test_results_dir)
-    path_images = os.path.join(config.test_data_refined_dir)
-    # path_images = os.path.join(config.path_data_root, config.test_data_refined_dir)
+    raw_data_dir = os.path.join(config.raw_data_dir)
+
     csv_file = os.path.join(res_root_dir, config.wkt_submission)
     graph_dir = os.path.join(res_root_dir, config.graph_dir)
     log_file = os.path.join(res_root_dir, "wkt_to_G.log")
@@ -1239,7 +1195,7 @@ def main():
 
     # read in wkt list
     logger1.info("df_wkt at: {}".format(csv_file))
-    # print ("df_wkt at:", csv_file)
+
     df_wkt = pd.read_csv(csv_file)
 
     # iterate through image ids and create graphs
@@ -1252,33 +1208,21 @@ def main():
 
     params = []
     for i, image_id in enumerate(image_ids):
-
-        print(i)
-        # if image_id != 'SN5_roads_test_public_AOI_9_San_Juan_PS-RGB_chip98':
-        #     continue
-        # print("\n")
         out_file = os.path.join(graph_dir, image_id.split(".")[0] + ".gpickle")
 
         if verbose:
             logger1.info(
                 "\n{x} / {y}, {z}".format(x=i + 1, y=len(image_ids), z=image_id)
             )
-        # print ("\n")
-        # print (i, "/", len(image_ids), image_id)
 
         # for geo referencing, im_file should be the raw image
+        print(image_id)
         if config.num_channels == 3:
-            im_file = os.path.join(path_images, "RGB-PanSharpen_" + image_id + ".tif")
-        else:
-            im_file = os.path.join(path_images, "MUL-PanSharpen_" + image_id + ".tif")
-        # im_file = os.path.join(path_images, image_id)
-        if not os.path.exists(im_file):
-            im_file = os.path.join(path_images, image_id + ".tif")
+            im_file = os.path.join(raw_data_dir, image_id + ".tif")
 
         # filter
         df_filt = df_wkt["WKT_Pix"][df_wkt["ImageId"] == image_id]
         wkt_list = df_filt.values
-        # wkt_list = [z[1] for z in df_filt_vals]
 
         # print a few values
         if verbose:
@@ -1287,7 +1231,7 @@ def main():
                     x=i + 1, y=len(image_ids), z=len(wkt_list)
                 )
             )
-        # print ("\n", i, "/", len(image_ids), "num linestrings:", len(wkt_list))
+
         if verbose:
             print("image_file:", im_file)
             print("  wkt_list[:2]", wkt_list[:2])
@@ -1295,10 +1239,6 @@ def main():
         if (len(wkt_list) == 0) or (wkt_list[0] == "LINESTRING EMPTY"):
             G = nx.MultiDiGraph()
             nx.write_gpickle(G, out_file, protocol=pickle_protocol)
-
-            # write to shape file
-            wkt_to_shp(wkt_list, "/opt/cresi/results/dar_tutorial_cpu/graphs/test.shp")
-            continue
 
         else:
             params.append(
@@ -1332,7 +1272,7 @@ def main():
     print("Time to run wkt_to_G.py: {} seconds".format(tf - t0))
 
     # write to shape file
-    wkt_to_shp(wkt_list, "/opt/cresi/results/dar_tutorial_cpu/graphs/test.shp")
+    # wkt_to_shp(wkt_list, "/opt/cresi/results/graphs/test.shp")
 
 
 ###############################################################################

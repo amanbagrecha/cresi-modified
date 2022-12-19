@@ -1,14 +1,3 @@
-#!/usr/bin/env python2
-# -*- coding: utf-8 -*-
-"""
-Created on Sat May  5 02:18:38 2018
-
-@author: avanetten
-  
-Adapted from:
-https://github.com/SpaceNetChallenge/RoadDetector/tree/master/albu-solution
-"""
-
 import time
 import cv2
 
@@ -22,26 +11,6 @@ import logging
 import json
 import glob
 import argparse
-
-# https://github.com/pytorch/pytorch/issues/1668
-# device = torch.device('cuda:0' if torch.cuda.is_avaliable() else 'cpu')
-if torch.cuda.is_available():
-    print("Executing inference with GPUs")
-    # pytorch 0.3
-    # torch.cuda.device(0)
-    ## pytorch 0.4
-    # device = "cuda"
-    # https://discuss.pytorch.org/t/cuda-freezes-the-python/9651/5
-    # torch.cuda.empty_cache()
-    torch.randn(10).cuda()
-
-else:
-    print("Executing inference on the CPU")
-    # pytorch 0.3
-    torch.cuda.device(-1)
-    ## pytorch 0.4
-    # device = "cpu"
-
 
 ############
 # need the following to avoid the following error:
@@ -58,7 +27,7 @@ from net.augmentations.transforms import (
 from net.dataset.reading_image_provider import ReadingImageProvider
 from net.dataset.raw_image import RawImageType
 from net.pytorch_utils.concrete_eval import FullImageEvaluator
-from utils.utils import update_config, get_csv_folds
+from utils.utils import update_config
 from configs.config import Config
 from utils import make_logger
 
@@ -140,18 +109,6 @@ if __name__ == "__main__":
         config, target_rows=config.eval_rows, target_cols=config.eval_cols
     )
 
-    # set images folder (depending on if we are slicing or not)
-    if (len(config.test_sliced_dir) > 0) and (config.slice_x > 0):
-        print("Executing tile_im.py..")
-
-        cmd = "python " + config.path_src + "/data_prep/tile_im.py " + args.config_path
-        print("slice command:", cmd)
-        os.system(cmd)
-
-        path_images = config.test_sliced_dir
-    else:
-        path_images = config.test_data_refined_dir
-
     # check image files
     exts = (
         "*.tif",
@@ -163,76 +120,77 @@ if __name__ == "__main__":
     )  # the tuple of file types
     files_grabbed = []
     for ext in exts:
-        files_grabbed.extend(glob.glob(os.path.join(path_images, ext)))
+        files_grabbed.extend(glob.glob(os.path.join(config.sliced_dir, ext)))
+
     if len(files_grabbed) == 0:
         print("02_eval.py: No valid image files to process, returning...")
 
+        exit(1)
+
+    paths = {"masks": "", "images": config.sliced_dir}
+    # set weights_dir (same as weight_save_path)
+    if config.save_weights_dir.startswith("/"):
+        weight_dir = config.save_weights_dir
     else:
-
-        paths = {"masks": "", "images": path_images}
-        # set weights_dir (same as weight_save_path)
-        if config.save_weights_dir.startswith("/"):
-            weight_dir = config.save_weights_dir
-        else:
-            weight_dir = os.path.join(
-                config.path_results_root, "weights", config.save_weights_dir
-            )
-
-        log_file = os.path.join(
-            config.path_results_root, config.test_results_dir, "test.log"
-        )
-        print("log_file:", log_file)
-        # make sure output folders exist
-        save_dir = os.path.join(
-            config.path_results_root, config.test_results_dir, config.folds_save_dir
-        )
-        print("save_dir:", save_dir)
-        os.makedirs(save_dir, exist_ok=True)
-
-        fn_mapping = {"masks": lambda name: os.path.splitext(name)[0] + ".tif"}  #'.png'
-        image_suffix = ""  #'img'
-        # set folds
-        skip_folds = []
-        if args.fold is not None:
-            skip_folds = [i for i in range(4) if i != int(args.fold)]
-        print("paths:", paths)
-        print("fn_mapping:", fn_mapping)
-        print("image_suffix:", image_suffix)
-        ###################
-
-        # set up logging
-        console, logger = make_logger.make_logger(
-            log_file, logger_name="log", write_to_console=bool(config.log_to_console)
+        weight_dir = os.path.join(
+            config.path_results_root, "weights", config.save_weights_dir
         )
 
-        logger.info("Testing: weight_dir: {x}".format(x=weight_dir))
-        # execute
-        t0 = time.time()
-        logging.info("Saving eval outputs to: {x}".format(x=save_dir))
-        folds = eval_cresi(
-            config,
-            paths,
-            fn_mapping,
-            image_suffix,
-            save_dir,
-            test=True,
-            weight_dir=weight_dir,
-            num_channels=config.num_channels,
-            nfolds=config.num_folds,
+    log_file = os.path.join(
+        config.path_results_root, config.test_results_dir, "test.log"
+    )
+    print("log_file:", log_file)
+    # make sure output folders exist
+    save_dir = os.path.join(
+        config.path_results_root, config.test_results_dir, config.folds_save_dir
+    )
+    print("save_dir:", save_dir)
+    os.makedirs(save_dir, exist_ok=True)
+
+    fn_mapping = {"masks": lambda name: os.path.splitext(name)[0] + ".tif"}  #'.png'
+    image_suffix = ""  #'img'
+    # set folds
+    skip_folds = []
+    if args.fold is not None:
+        skip_folds = [i for i in range(4) if i != int(args.fold)]
+    print("paths:", paths)
+    print("fn_mapping:", fn_mapping)
+    print("image_suffix:", image_suffix)
+    ###################
+
+    # set up logging
+    console, logger = make_logger.make_logger(
+        log_file, logger_name="log", write_to_console=bool(config.log_to_console)
+    )
+
+    logger.info("Testing: weight_dir: {x}".format(x=weight_dir))
+    # execute
+    t0 = time.time()
+    logging.info("Saving eval outputs to: {x}".format(x=save_dir))
+    folds = eval_cresi(
+        config,
+        paths,
+        fn_mapping,
+        image_suffix,
+        save_dir,
+        test=True,
+        weight_dir=weight_dir,
+        num_channels=config.num_channels,
+        nfolds=config.num_folds,
+    )
+    t1 = time.time()
+    logger.info(
+        "Time to run {x} folds for {y} = {z} seconds".format(
+            x=len(folds), y=len(os.listdir(config.sliced_dir)), z=t1 - t0
         )
-        t1 = time.time()
-        logger.info(
-            "Time to run {x} folds for {y} = {z} seconds".format(
-                x=len(folds), y=len(os.listdir(path_images)), z=t1 - t0
-            )
-        )
-        print(
-            "Time to run",
-            len(folds),
-            "folds for",
-            len(os.listdir(path_images)),
-            "=",
-            t1 - t0,
-            "seconds",
-        )
+    )
+    print(
+        "Time to run",
+        len(folds),
+        "folds for",
+        len(os.listdir(config.sliced_dir)),
+        "=",
+        t1 - t0,
+        "seconds",
+    )
 

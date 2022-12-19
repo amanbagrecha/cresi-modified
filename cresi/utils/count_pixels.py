@@ -36,7 +36,7 @@ if __name__ == '__main__':
         config = Config(**cfg)
 
     # get input dir
-    path_images_8bit = os.path.join(config.path_data_root, config.test_data_refined_dir)
+    path_images_8bit = os.path.join(config.path_data_root, config.sliced_dir)
 
     im_roots = np.sort([z for z in os.listdir(path_images_8bit) if z.endswith('.tif')])
     tot_pixels = 0

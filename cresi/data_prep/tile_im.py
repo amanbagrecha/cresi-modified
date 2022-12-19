@@ -15,6 +15,7 @@ import argparse
 import numpy as np
 import pandas as pd
 import cv2
+import json
 
 # cv2 can't load large files, so need to import skimage too
 import skimage.io
@@ -90,11 +91,13 @@ def slice_ims(
         # after resize, iterate through image
         #     and bin it up appropriately
         for x in range(0, w - 1, stride_x):
+            # y axis is inverted
             for y in range(0, h - 1, stride_y):
+                ymax = h - y
 
                 xmin = min(x, w - slice_x)
-                ymin = min(y, h - slice_y)
-                coords = (xmin, ymin)
+                # ymax = m(ymax, 0)
+                coords = (xmin, ymax)
 
                 # check if we've already seen these coords
                 if coords in seen_coords:
@@ -103,12 +106,16 @@ def slice_ims(
                     seen_coords.add(coords)
 
                 # check if we screwed up binning
-                if (xmin + slice_x > w) or (ymin + slice_y > h):
+                if (xmin + slice_x > w) or (ymax - slice_y < 0):
                     print("Improperly binned image,")
                     return
 
+                # handle y axis inversion
+                print("old", ymax)
+                print("new", ymax - slice_y)
+
                 # get satellite image cutout
-                im_cutout = im[ymin : ymin + slice_y, xmin : xmin + slice_x]
+                im_cutout = im[ymax - slice_y : ymax, xmin : xmin + slice_x]
 
                 ##############
                 # skip if the whole thing is black
@@ -170,32 +177,6 @@ def slice_ims(
 
 ##############################################################################
 def main():
-
-    # # construct the argument parse and parse the arguments
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument('--im_dir', type=str, default='',
-    #                     help="images location")
-    # parser.add_argument('--out_dir', type=str, default='',
-    #                     help="output_images location")
-    # parser.add_argument('--slice_x', type=int, default=1300)
-    # parser.add_argument('--slice_y', type=int, default=1300)
-    # parser.add_argument('--stride_x', type=int, default=1200)
-    # parser.add_argument('--stride_y', type=int, default=1200)
-    # args = parser.parse_args()
-
-    # if not os.path.exists(args.out_dir):
-    #     os.mkdir(args.out_dir)
-
-    # df_pos = slice_ims(args.im_dir, args.out_dir, args.slice_x, args.slice_y,
-    #                 args.stride_x, args.stride_y,
-    #                 pos_columns = ['idx', 'name', 'xmin',
-    #                               'ymin', 'slice_x',
-    #                               'slice_y', 'im_x', 'im_y'],
-    #                 verbose=True)
-
-    # use config file
-    import json
-
     parser = argparse.ArgumentParser()
     parser.add_argument("config_path")
     args = parser.parse_args()
@@ -205,28 +186,23 @@ def main():
         config = Config(**cfg)
 
     # get input dir
-    path_images_8bit = os.path.join(config.test_data_refined_dir)
+    path_images_8bit = os.path.join(config.eight_bit_dir)
 
     # make output dirs
-    # first, results dir
-    res_dir = os.path.join(config.path_results_root, config.test_results_dir)
+    res_dir = os.path.join(config.path_results_root, config.results_dir)
     os.makedirs(res_dir, exist_ok=True)
+
     path_tile_df_csv = os.path.join(
-        config.path_results_root, config.test_results_dir, config.tile_df_csv
-    )
-    path_tile_df_csv2 = os.path.join(
-        config.path_data_root,
-        os.path.dirname(config.test_sliced_dir),
-        config.tile_df_csv,
+        config.path_results_root, config.results_dir, config.tile_df_csv
     )
 
     # path for sliced data
-    path_sliced = config.test_sliced_dir
-    # path_sliced = os.path.join(config.path_data_root, config.test_sliced_dir)
+    path_sliced = config.sliced_dir
+
     print("Output path for sliced images:", path_sliced)
 
     # only run if nonzero tile and sliced_dir
-    if (len(config.test_sliced_dir) > 0) and (config.slice_x > 0):
+    if (len(config.sliced_dir) > 0) and (config.slice_x > 0):
         print("processing starting")
 
         os.makedirs(path_sliced, exist_ok=True)
@@ -254,8 +230,6 @@ def main():
         # save to file
         df_pos.to_csv(path_tile_df_csv)
         print("df saved to file:", path_tile_df_csv)
-        # also csv save to data dir
-        df_pos.to_csv(path_tile_df_csv2)
 
     else:
         print("Not creating tile_df.csv file")

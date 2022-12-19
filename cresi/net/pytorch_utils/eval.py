@@ -1,22 +1,14 @@
 import os
 import sys
-import cv2
-
-cv2.setNumThreads(0)
-cv2.ocl.setUseOpenCL(False)
 import numpy as np
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 
 # torch.backends.cudnn.benchmark = True
 import tqdm
-from multiprocessing.pool import Pool
-from torch import multiprocessing
 
 from torch.serialization import SourceChangeWarning
 import warnings
-import torchsummary
 from torch.utils.data.dataloader import DataLoader as PytorchDataLoader
 
 # import relative paths
@@ -96,6 +88,7 @@ def predictor(model, batch, flips=flip.FLIP_NONE, verbose=True):
         return to_numpy(new_mask)
     return to_numpy(pred1)
 
+
 def read_model(path_model_weights, fold, n_gpus=4):
     print("Running eval.read_model()...")
     # model = nn.DataParallel(torch.load(os.path.join('..', 'weights', project, 'fold{}_best.pth'.format(fold))))
@@ -117,7 +110,7 @@ def read_model(path_model_weights, fold, n_gpus=4):
             )
 
         model.eval()
-        #print("  model:", model)
+        # print("  model:", model)
         print("  model sucessfully loaded")
         return model
 
