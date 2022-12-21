@@ -1,13 +1,3 @@
-#!/usr/bin/env python2
-# -*- coding: utf-8 -*-
-"""
-Created on Tue May 15 16:16:58 2018
-
-@author: avanetten
-"""
-
-from __future__ import print_function
-
 import os
 import sys
 import time
@@ -16,9 +6,6 @@ import numpy as np
 import pandas as pd
 import cv2
 import json
-
-# cv2 can't load large files, so need to import skimage too
-import skimage.io
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "configs"))
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
@@ -45,15 +32,12 @@ def slice_ims(
         "im_y",
     ],
     sep="__",
-    verbose=True,
 ):
     """Slice images into patches, assume ground truth masks
         are present
     Adapted from basiss.py"""
 
-    print("slicing", im_dir)
-    if verbose:
-        print("Slicing images in:", im_dir)
+    print("Slicing", im_dir)
 
     t0 = time.time()
     count = 0
@@ -68,14 +52,10 @@ def slice_ims(
 
         print("im_path", im_path)
 
-        if verbose:
-            print("im_path:", im_path)
         name = im_root.split(".")[0]
 
         # load with skimage, and reverse order of bands
-        im = skimage.io.imread(im_path)[::-1]
-        # cv2 can't load large files
-        # im = cv2.imread(im_path)
+        im = cv2.imread(im_path)
         h, w, nbands = im.shape
         n_pix = h * w
         print("im.shape:", im.shape)
@@ -84,20 +64,15 @@ def slice_ims(
 
         seen_coords = set()
 
-        # if verbose and (i % 10) == 0:
-        #    print(i, "im_root:", im_root)
-
         # dice it up
         # after resize, iterate through image
         #     and bin it up appropriately
         for x in range(0, w - 1, stride_x):
-            # y axis is inverted
             for y in range(0, h - 1, stride_y):
-                ymax = h - y
 
                 xmin = min(x, w - slice_x)
-                # ymax = m(ymax, 0)
-                coords = (xmin, ymax)
+                ymin = min(y, h - slice_y)
+                coords = (xmin, ymin)
 
                 # check if we've already seen these coords
                 if coords in seen_coords:
@@ -106,27 +81,18 @@ def slice_ims(
                     seen_coords.add(coords)
 
                 # check if we screwed up binning
-                if (xmin + slice_x > w) or (ymax - slice_y < 0):
+                if (xmin + slice_x > w) or (ymin + slice_y > h):
                     print("Improperly binned image,")
                     return
 
-                # handle y axis inversion
-                print("old", ymax)
-                print("new", ymax - slice_y)
-
                 # get satellite image cutout
-                im_cutout = im[ymax - slice_y : ymax, xmin : xmin + slice_x]
+                im_cutout = im[ymin : ymin + slice_y, xmin : xmin + slice_x]
 
-                ##############
                 # skip if the whole thing is black
                 if np.max(im_cutout) < 1.0:
                     continue
                 else:
                     count += 1
-
-                if verbose and (count % 50) == 0:
-                    print("count:", count, "x:", x, "y:", y)
-                ###############
 
                 # set slice name
                 name_full = (
@@ -149,16 +115,13 @@ def slice_ims(
                 )
 
                 pos = [i, name, name_full, xmin, ymin, slice_x, slice_y, w, h]
+
                 # add to arrays
-                # idx_list.append(idx_full)
                 name_list.append(name_full)
-                # im_list.append(im_cutout)
-                # mask_list.append(mask_cutout)
                 pos_list.append(pos)
 
                 name_out = os.path.join(out_dir, name_full)
 
-                # if we read in with skimage, need to reverse colors
                 cv2.imwrite(name_out, cv2.cvtColor(im_cutout, cv2.COLOR_RGB2BGR))
 
                 # cv2.imwrite(name_out, im_cutout)
@@ -185,31 +148,22 @@ def main():
         cfg = json.load(f)
         config = Config(**cfg)
 
-    # get input dir
-    path_images_8bit = os.path.join(config.eight_bit_dir)
+    path_tile_df_csv = os.path.join(config.results_dir, config.tile_df_csv)
 
     # make output dirs
-    res_dir = os.path.join(config.path_results_root, config.results_dir)
-    os.makedirs(res_dir, exist_ok=True)
+    os.makedirs(config.eight_bit_dir, exist_ok=True)
+    os.makedirs(config.results_dir, exist_ok=True)
+    os.makedirs(config.sliced_dir, exist_ok=True)
 
-    path_tile_df_csv = os.path.join(
-        config.path_results_root, config.results_dir, config.tile_df_csv
-    )
-
-    # path for sliced data
-    path_sliced = config.sliced_dir
-
-    print("Output path for sliced images:", path_sliced)
+    print("Output path for sliced images:", config.sliced_dir)
 
     # only run if nonzero tile and sliced_dir
     if (len(config.sliced_dir) > 0) and (config.slice_x > 0):
         print("processing starting")
 
-        os.makedirs(path_sliced, exist_ok=True)
-
         df_pos = slice_ims(
-            path_images_8bit,
-            path_sliced,
+            config.eight_bit_dir,
+            config.sliced_dir,
             config.slice_x,
             config.slice_y,
             config.stride_x,
@@ -225,7 +179,6 @@ def main():
                 "im_x",
                 "im_y",
             ],
-            verbose=False,
         )
         # save to file
         df_pos.to_csv(path_tile_df_csv)

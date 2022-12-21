@@ -1,13 +1,10 @@
 import time
-import cv2
 
-cv2.setNumThreads(0)
-cv2.ocl.setUseOpenCL(False)
 import os
 
 # import shutil
 import torch
-import logging
+
 import json
 import glob
 import argparse
@@ -20,16 +17,10 @@ from tqdm import tqdm
 tqdm.monitor_interval = 0
 ############
 
-from net.augmentations.transforms import (
-    get_flips_colors_augmentation,
-    get_flips_shifts_augmentation,
-)
 from net.dataset.reading_image_provider import ReadingImageProvider
 from net.dataset.raw_image import RawImageType
 from net.pytorch_utils.concrete_eval import FullImageEvaluator
-from utils.utils import update_config
 from configs.config import Config
-from utils import make_logger
 
 
 ###############################################################################
@@ -48,7 +39,6 @@ def eval_cresi(
     fn_mapping,
     image_suffix,
     save_dir,
-    test=True,
     num_channels=3,
     weight_dir="",
     nfolds=4,
@@ -79,7 +69,6 @@ def eval_cresi(
             config,
             ds,
             save_dir=save_dir,
-            test=test,
             flips=3,
             num_workers=num_workers,
             border=config.padding,
@@ -105,9 +94,6 @@ if __name__ == "__main__":
     with open(args.config_path, "r") as f:
         cfg = json.load(f)
     config = Config(**cfg)
-    config = update_config(
-        config, target_rows=config.eval_rows, target_cols=config.eval_cols
-    )
 
     # check image files
     exts = (
@@ -128,62 +114,44 @@ if __name__ == "__main__":
         exit(1)
 
     paths = {"masks": "", "images": config.sliced_dir}
-    # set weights_dir (same as weight_save_path)
-    if config.save_weights_dir.startswith("/"):
-        weight_dir = config.save_weights_dir
-    else:
-        weight_dir = os.path.join(
-            config.path_results_root, "weights", config.save_weights_dir
-        )
 
-    log_file = os.path.join(
-        config.path_results_root, config.test_results_dir, "test.log"
-    )
-    print("log_file:", log_file)
+    # set weights_dir
+    weight_dir = config.path_weights
+
     # make sure output folders exist
-    save_dir = os.path.join(
-        config.path_results_root, config.test_results_dir, config.folds_save_dir
-    )
+    save_dir = os.path.join(config.results_dir, config.folds_save_dir)
+
     print("save_dir:", save_dir)
     os.makedirs(save_dir, exist_ok=True)
 
     fn_mapping = {"masks": lambda name: os.path.splitext(name)[0] + ".tif"}  #'.png'
     image_suffix = ""  #'img'
+
     # set folds
     skip_folds = []
     if args.fold is not None:
         skip_folds = [i for i in range(4) if i != int(args.fold)]
+
     print("paths:", paths)
     print("fn_mapping:", fn_mapping)
     print("image_suffix:", image_suffix)
     ###################
 
-    # set up logging
-    console, logger = make_logger.make_logger(
-        log_file, logger_name="log", write_to_console=bool(config.log_to_console)
-    )
-
-    logger.info("Testing: weight_dir: {x}".format(x=weight_dir))
     # execute
     t0 = time.time()
-    logging.info("Saving eval outputs to: {x}".format(x=save_dir))
+
     folds = eval_cresi(
         config,
         paths,
         fn_mapping,
         image_suffix,
         save_dir,
-        test=True,
         weight_dir=weight_dir,
         num_channels=config.num_channels,
         nfolds=config.num_folds,
     )
     t1 = time.time()
-    logger.info(
-        "Time to run {x} folds for {y} = {z} seconds".format(
-            x=len(folds), y=len(os.listdir(config.sliced_dir)), z=t1 - t0
-        )
-    )
+
     print(
         "Time to run",
         len(folds),

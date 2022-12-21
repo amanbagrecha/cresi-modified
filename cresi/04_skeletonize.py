@@ -2,7 +2,6 @@ from skimage.morphology import (
     skeletonize,
     remove_small_objects,
     remove_small_holes,
-    medial_axis,
 )
 import numpy as np
 from matplotlib.pylab import plt
@@ -22,10 +21,8 @@ import skimage.draw
 import skimage.io
 import cv2
 
-from utils import make_logger
 from configs.config import Config
 
-logger1 = None
 linestring = "LINESTRING {}"
 
 
@@ -778,7 +775,7 @@ def build_wkt_dir(
         t1 = time.time()
         if verbose:
             print("\n", i + 1, "/", nfiles, ":", imfile)
-        logger1.info("{x} / {y} : {z}".format(x=i + 1, y=nfiles, z=imfile))
+
         img_loc = os.path.join(indir, imfile)
 
         if spacenet_naming_convention:
@@ -856,7 +853,6 @@ def build_wkt_dir(
             all_data.append((im_root, v))
             # all_data.append((imfile, v))
         t2 = time.time()
-        logger1.info("Time to build graph: {} seconds".format(t2 - t1))
 
     # save to csv
     df = pd.DataFrame(all_data, columns=["ImageId", "WKT_Pix"])
@@ -868,7 +864,6 @@ def build_wkt_dir(
 ###############################################################################
 def main():
 
-    global logger1
     add_small = True
     verbose = True
     super_verbose = False
@@ -899,17 +894,16 @@ def main():
     print("min_spur_length_pix:", min_spur_length_pix)
     use_medial_axis = bool(config.use_medial_axis)
     print("Use_medial_axis?", use_medial_axis)
-    pix_extent = config.eval_rows - (2 * config.padding)
 
     # check if we are stitching together large images or not
     out_dir_mask_norm = os.path.join(
-        config.path_results_root, config.test_results_dir, config.stitched_dir_norm
+        config.results_dir, config.stitched_dir_norm
     )
     folds_dir = os.path.join(
-        config.path_results_root, config.test_results_dir, config.folds_save_dir
+        config.results_dir, config.folds_save_dir
     )
     merge_dir = os.path.join(
-        config.path_results_root, config.test_results_dir, config.merged_dir
+        config.results_dir, config.merged_dir
     )
 
     if os.path.exists(out_dir_mask_norm):
@@ -924,9 +918,10 @@ def main():
     os.makedirs(im_dir, exist_ok=True)
 
     # outut files
-    res_root_dir = os.path.join(config.path_results_root, config.test_results_dir)
+    res_root_dir = config.results_dir
+
     outfile_csv = os.path.join(res_root_dir, config.wkt_submission)
-    # outfile_gpickle = os.path.join(res_root_dir, 'G_sknw.gpickle')
+
     out_ske_dir = os.path.join(
         res_root_dir, config.skeleton_dir
     )  # set to '' to not save
@@ -946,11 +941,6 @@ def main():
     thresh = config.skeleton_thresh
 
     min_subgraph_length_pix = config.min_subgraph_length_pix
-
-    log_file = os.path.join(res_root_dir, "skeleton.log")
-    console, logger1 = make_logger.make_logger(
-        log_file, logger_name="log", write_to_console=bool(config.log_to_console)
-    )
 
     # print("Building wkts...")
     t0 = time.time()
@@ -988,7 +978,7 @@ def main():
     print("len df:", len(df))
     print("outfile:", outfile_csv)
     t1 = time.time()
-    logger1.info("Total time to run build_wkt_dir: {} seconds".format(t1 - t0))
+    
     print("Total time to run build_wkt_dir:", t1 - t0, "seconds")
 
 
